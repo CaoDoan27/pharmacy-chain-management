@@ -1,0 +1,72 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-3"><%= title %></h1>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header">
+    <h5 class="mb-0">Thông tin chung</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-4">
+        <strong>Mã phiếu:</strong>
+        <p>#<%= receipt.id %></p>
+      </div>
+      <div class="col-md-4">
+        <strong>Ngày nhập:</strong>
+        <p><%= new Date(receipt.ngayNhap).toLocaleString('vi-VN') %></p>
+      </div>
+      <div class="col-md-4">
+        <strong>Người tạo:</strong>
+        <p><%= receipt.User.hoTen %></p>
+      </div>
+      <div class="col-md-8">
+        <strong>Nhà cung cấp:</strong>
+        <p><%= receipt.Supplier.tenNhaCungCap %></p>
+      </div>
+      <div class="col-md-4">
+        <strong>SĐT Nhà cung cấp:</strong>
+        <p><%= receipt.Supplier.soDienThoai %></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header">
+    <h5 class="mb-0">Chi tiết sản phẩm đã nhập</h5>
+  </div>
+  <div class="card-body">
+    <table class="table">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">Sản phẩm</th>
+          <th scope="col">Số lô</th>
+          <th scope="col">Hạn sử dụng</th>
+          <th scope="col">Số lượng (ĐV cơ sở)</th>
+          <th scope="col">Giá nhập / 1 ĐV</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% receipt.GoodsReceiptItems.forEach(item => { %>
+          <tr>
+            <td>
+              <strong><%= item.Product.tenSanPham %></strong><br>
+              <small class="text-muted"><%= item.Product.donViCoSo %></small>
+            </td>
+            <td><%= item.soLo %></td>
+            <td><%= new Date(item.hanSuDung).toLocaleDateString('vi-VN') %></td>
+            <td><%= item.soLuong.toLocaleString('vi-VN') %></td>
+            <td><%= new Intl.NumberFormat('vi-VN').format(item.giaNhap) %> VNĐ</td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="mt-4">
+  <a href="/goods-receipt" class="btn btn-secondary">&larr; Quay lại Lịch sử</a>
+</div>
+
+<%- include('../partials/footer') %>

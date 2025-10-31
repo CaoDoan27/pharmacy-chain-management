@@ -5,7 +5,12 @@ const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const { sequelize } = require('./models'); // Import từ models/index.js
 const authRoutes = require('./routes/authRoutes');
+const productRoutes = require('./routes/productRoutes');
 const { isAuth } = require('./middleware/authMiddleware');
+const supplierRoutes = require('./routes/supplierRoutes');
+const goodsReceiptRoutes = require('./routes/goodsReceiptRoutes');
+const inventoryRoutes = require('./routes/inventoryRoutes');
+const customerRoutes = require('./routes/customerRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +42,12 @@ app.use((req, res, next) => {
 
 // 4. Routes
 app.use(authRoutes); // Sử dụng các route xác thực
+app.use('/products', productRoutes); // Sử dụng các route sản phẩm
+app.use('/suppliers', supplierRoutes);
+app.use('/goods-receipt', goodsReceiptRoutes);
+app.use('/inventory', inventoryRoutes);
+app.use('/customers', customerRoutes);
+
 app.get('/', isAuth, (req, res) => {
   res.render('index', { title: 'Trang Chủ' });
 });

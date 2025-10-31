@@ -1,0 +1,108 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-3"><%= title %></h1>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+
+    <form 
+      action="<%= isEditing ? '/products/edit/' + product.id : '/products/add' %>" 
+      method="POST"
+    >
+
+      <% if (error) { %>
+        <div class="alert alert-danger" role="alert">
+          <%= error %>
+        </div>
+      <% } %>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="tenSanPham" class="form-label">Tên sản phẩm (*)</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="tenSanPham" 
+              name="tenSanPham"
+              value="<%= (product && product.tenSanPham) ? product.tenSanPham : '' %>"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="hoatChat" class="form-label">Hoạt chất (*)</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="hoatChat" 
+              name="hoatChat"
+              value="<%= (product && product.hoatChat) ? product.hoatChat : '' %>"
+              required
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label for="danhMuc" class="form-label">Danh mục (*)</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="danhMuc" 
+              name="danhMuc"
+              placeholder="Ví dụ: Giảm đau, hạ sốt"
+              value="<%= (product && product.danhMuc) ? product.danhMuc : '' %>"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label for="donViCoSo" class="form-label">Đơn vị cơ sở (nhỏ nhất) (*)</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="donViCoSo" 
+              name="donViCoSo"
+              placeholder="Ví dụ: Viên, Gói, Chai, Ống"
+              value="<%= (product && product.donViCoSo) ? product.donViCoSo : '' %>"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label for="giaBan" class="form-label">Giá bán / 1 ĐV cơ sở (VNĐ) (*)</label>
+            <input 
+              type="number" 
+              class="form-control" 
+              id="giaBan" 
+              name="giaBan"
+              step="100"
+              min="0"
+              value="<%= (product && product.giaBan) ? product.giaBan : '0' %>"
+              required
+            >
+          </div>
+        </div>
+      </div>
+
+      <hr>
+
+      <button type="submit" class="btn btn-primary">
+        <%= isEditing ? 'Cập nhật Sản phẩm' : 'Lưu Sản phẩm' %>
+      </button>
+      <a href="/products" class="btn btn-secondary">Hủy</a>
+
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,72 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-3"><%= title %></h1>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+
+    <form 
+      action="<%= isEditing ? '/suppliers/edit/' + supplier.id : '/suppliers/add' %>" 
+      method="POST"
+    >
+
+      <% if (error) { %>
+        <div class="alert alert-danger" role="alert">
+          <%= error %>
+        </div>
+      <% } %>
+
+      <div class="mb-3">
+        <label for="tenNhaCungCap" class="form-label">Tên nhà cung cấp (*)</label>
+        <input 
+          type="text" 
+          class="form-control" 
+          id="tenNhaCungCap" 
+          name="tenNhaCungCap"
+          value="<%= (supplier && supplier.tenNhaCungCap) ? supplier.tenNhaCungCap : '' %>"
+          required
+        >
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="soDienThoai" class="form-label">Số điện thoại (*)</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="soDienThoai" 
+              name="soDienThoai"
+              value="<%= (supplier && supplier.soDienThoai) ? supplier.soDienThoai : '' %>"
+              required
+            >
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="email" class="form-label">Email (*)</label>
+            <input 
+              type="email" 
+              class="form-control" 
+              id="email" 
+              name="email"
+              placeholder="email@example.com"
+              value="<%= (supplier && supplier.email) ? supplier.email : '' %>"
+              required
+            >
+          </div>
+        </div>
+      </div>
+
+      <hr>
+
+      <button type="submit" class="btn btn-primary">
+        <%= isEditing ? 'Cập nhật Nhà cung cấp' : 'Lưu Nhà cung cấp' %>
+      </button>
+      <a href="/suppliers" class="btn btn-secondary">Hủy</a>
+
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

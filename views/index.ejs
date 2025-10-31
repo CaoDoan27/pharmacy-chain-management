@@ -1,11 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %></title>
-</head>
-<body>
-  <h1>Xin chào, đây là dự án Quản lý Nhà thuốc!</h1>
-</body>
-</html>
+<%- include('partials/header') %>
+
+<div class="p-5 mb-4 bg-white rounded-3 shadow-sm">
+  <div class="container-fluid py-5">
+    <h1 class="display-5 fw-bold">Chào mừng đến Trang quản trị!</h1>
+    <p class="col-md-8 fs-4">
+      Bạn đã đăng nhập thành công với vai trò 
+      <span class="badge bg-success"><%= user.vaiTro %></span>.
+    </p>
+    <p>Đây là trang chủ của hệ thống. Chúng ta sẽ thêm các chức năng quản lý tại đây.</p>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

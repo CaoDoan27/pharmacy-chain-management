@@ -1,0 +1,112 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-3"><%= title %></h1>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <form action="/inventory/lookup" method="GET">
+      <div class="input-group">
+        <input 
+          type="text" 
+          class="form-control form-control-lg" 
+          placeholder="Nhập tên sản phẩm..." 
+          name="q"
+          value="<%= searchTerm %>" >
+        <button class="btn btn-primary" type="submit">Tìm kiếm</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<% if (results) { %>
+
+  <h3 class="h5 mb-3">
+    Tồn kho tại: 
+    <span class="text-primary"><%= results.myBranch.branchName || 'Chi nhánh của bạn' %></span>
+  </h3>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title">
+        Tổng tồn: 
+        <span class="fw-bold text-success"><%= results.myBranch.totalStock.toLocaleString('vi-VN') %></span>
+         ĐV cơ sở
+      </h5>
+
+      <table class="table table-sm table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Sản phẩm</th>
+            <th>Số lô</th>
+            <th>Hạn sử dụng</th>
+            <th>Tồn kho</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (results.myBranch.batches.length === 0) { %>
+            <tr>
+              <td colspan="4" class="text-center text-muted">Không tìm thấy tồn kho tại chi nhánh này.</td>
+            </tr>
+          <% } %>
+          <% results.myBranch.batches.forEach(batch => { %>
+            <tr class_name="<%= new Date(batch.hanSuDung) < new Date() ? 'table-danger' : '' %>">
+              <td><%= batch.productName %></td>
+              <td><%= batch.soLo %></td>
+              <td>
+                <%= new Date(batch.hanSuDung).toLocaleDateString('vi-VN') %>
+                <% if (new Date(batch.hanSuDung) < new Date()) { %>
+                  <span class="badge bg-danger ms-2">Hết hạn</span>
+                <% } %>
+              </td>
+              <td><%= batch.soLuongTon.toLocaleString('vi-VN') %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3 class="h5 mb-3">Tồn kho tại các chi nhánh khác</h3>
+
+  <% if (results.otherBranches.length === 0) { %>
+    <p class="text-muted">Không tìm thấy tồn kho tại các chi nhánh khác.</p>
+  <% } %>
+
+  <% results.otherBranches.forEach(branch => { %>
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="card-title">
+          <%= branch.branchName %> - 
+          Tổng tồn: 
+          <span class="fw-bold text-dark"><%= branch.totalStock.toLocaleString('vi-VN') %></span>
+           ĐV cơ sở
+        </h5>
+        <table class="table table-sm">
+          <thead class="table-light">
+            <tr>
+              <th>Sản phẩm</th>
+              <th>Số lô</th>
+              <th>Hạn sử dụng</th>
+              <th>Tồn kho</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% branch.batches.forEach(batch => { %>
+              <tr class_name="<%= new Date(batch.hanSuDung) < new Date() ? 'table-danger' : '' %>">
+                <td><%= batch.productName %></td>
+                <td><%= batch.soLo %></td>
+                <td><%= new Date(batch.hanSuDung).toLocaleDateString('vi-VN') %></td>
+                <td><%= batch.soLuongTon.toLocaleString('vi-VN') %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% }) %>
+
+<% } else if (searchTerm) { %>
+  <p class="text-center text-muted">Không tìm thấy sản phẩm nào khớp với từ khóa "<%= searchTerm %>".</p>
+<% } %>
+
+
+<%- include('../partials/footer') %>

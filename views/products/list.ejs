@@ -1,0 +1,56 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3"><%= title %></h1>
+  <a href="/products/add" class="btn btn-primary">
+    + Thêm sản phẩm mới
+  </a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">Tên Sản phẩm</th>
+          <th scope="col">Danh mục</th> <th scope="col">Đơn vị cơ sở</th> <th scope="col">Giá bán (trên 1 ĐV)</th>
+          <th scope="col">Trạng thái</th>
+          <th scope="col" class="text-end">Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% products.forEach(product => { %>
+          <tr>
+            <td><strong><%= product.tenSanPham %></strong><br>
+              <small class="text-muted"><%= product.hoatChat %></small>
+            </td>
+            <td><%= product.danhMuc %></td> <td><%= product.donViCoSo %></td> <td><%= new Intl.NumberFormat('vi-VN').format(product.giaBan) %> VNĐ</td>
+            <td>
+              <% if (product.trangThai === 'Đang kinh doanh') { %>
+                <span class="badge bg-success">Đang kinh doanh</span>
+              <% } else { %>
+                <span class="badge bg-secondary">Ngừng kinh doanh</span>
+              <% } %>
+            </td>
+            <td class="text-end">
+
+              <form action="/products/status/<%= product.id %>" method="POST" class="d-inline">
+                <input type="hidden" name="currentStatus" value="<%= product.trangThai %>">
+                <button type"submit" class="btn btn-warning btn-sm">
+                  <%= (product.trangThai === 'Đang kinh doanh') ? 'Ngừng' : 'Mở bán' %>
+                </button>
+              </form>
+
+              <a href="/products/edit/<%= product.id %>" class="btn btn-outline-primary btn-sm">
+                Sửa
+              </a>
+
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

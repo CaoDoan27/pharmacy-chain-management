@@ -1,0 +1,63 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">
+      Hệ thống Quản lý Nhà thuốc
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <% if (user) { %>
+
+          <% if (user.vaiTro === 'Quản lý chi nhánh' || user.vaiTro === 'Nhân viên') { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/inventory/lookup">Tra cứu Tồn kho</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/customers">Quản lý Khách hàng</a>
+            </li>
+          <% } %>
+
+          <% if (user.vaiTro === 'Quản lý tổng') { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/products">Quản lý Sản phẩm</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/suppliers">Quản lý Nhà cung cấp</a>
+            </li>
+          <% } %>
+
+          <% if (user.vaiTro === 'Quản lý chi nhánh') { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/goods-receipt/add">Tạo Phiếu Nhập Kho</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/goods-receipt">Lịch sử Nhập kho</a>
+            </li>
+          <% } %>
+
+        <% } %>
+      </ul>
+
+      <ul class="navbar-nav ms-auto">
+        <% if (user) { %>
+          <li class="nav-item">
+            <a class="nav-link active" href="#">
+              Chào, <%= user.hoTen %> (<%= user.vaiTro %>)
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link btn btn-danger btn-sm text-white" href="/logout">Đăng xuất</a>
+          </li>
+        <% } else { %>
+          <li class="nav-item">
+            <a class="nav-link active" href="/login">Đăng nhập</a>
+          </li>
+        <% } %>
+      </ul>
+
+    </div>
+  </div>
+</nav>

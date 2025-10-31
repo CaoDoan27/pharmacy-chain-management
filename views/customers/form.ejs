@@ -1,0 +1,60 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-3"><%= title %></h1>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+
+    <form 
+      action="<%= isEditing ? '/customers/edit/' + customer.id : '/customers/add' %>" 
+      method="POST"
+    >
+
+      <% if (error) { %>
+        <div class="alert alert-danger" role="alert">
+          <%= error %>
+        </div>
+      <% } %>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="hoTen" class="form-label">Họ tên khách hàng (*)</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="hoTen" 
+              name="hoTen"
+              value="<%= (customer && customer.hoTen) ? customer.hoTen : '' %>"
+              required
+            >
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="soDienThoai" class="form-label">Số điện thoại (*)</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="soDienThoai" 
+              name="soDienThoai"
+              placeholder="SĐT là mã duy nhất của khách"
+              value="<%= (customer && customer.soDienThoai) ? customer.soDienThoai : '' %>"
+              required
+            >
+          </div>
+        </div>
+      </div>
+
+      <hr>
+
+      <button type="submit" class="btn btn-primary">
+        <%= isEditing ? 'Cập nhật Khách hàng' : 'Lưu Khách hàng' %>
+      </button>
+      <a href="/customers" class="btn btn-secondary">Hủy</a>
+
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

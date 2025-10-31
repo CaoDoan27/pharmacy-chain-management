@@ -1,0 +1,56 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3"><%= title %></h1>
+  <a href="/suppliers/add" class="btn btn-primary">
+    + Thêm nhà cung cấp mới
+  </a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">Tên Nhà cung cấp</th>
+          <th scope="col">Số điện thoại</th>
+          <th scope="col">Email</th>
+          <th scope="col">Trạng thái</th>
+          <th scope="col" class="text-end">Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% suppliers.forEach(supplier => { %>
+          <tr>
+            <td><strong><%= supplier.tenNhaCungCap %></strong></td>
+            <td><%= supplier.soDienThoai %></td>
+            <td><%= supplier.email %></td>
+            <td>
+              <% if (supplier.trangThai === 'Đang hoạt động') { %>
+                <span class="badge bg-success">Đang hoạt động</span>
+              <% } else { %>
+                <span class="badge bg-secondary">Vô hiệu hóa</span>
+              <% } %>
+            </td>
+            <td class="text-end">
+
+              <form action="/suppliers/status/<%= supplier.id %>" method="POST" class="d-inline">
+                <input type="hidden" name="currentStatus" value="<%= supplier.trangThai %>">
+                <button type"submit" class="btn btn-warning btn-sm">
+                  <%= (supplier.trangThai === 'Đang hoạt động') ? 'Vô hiệu hóa' : 'Kích hoạt' %>
+                </button>
+              </form>
+
+              <a href="/suppliers/edit/<%= supplier.id %>" class="btn btn-outline-primary btn-sm">
+                Sửa
+              </a>
+
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

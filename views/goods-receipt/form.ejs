@@ -1,0 +1,141 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-3"><%= title %></h1>
+
+<form action="/goods-receipt/add" method="POST" id="receipt-form">
+  <div class="card shadow-sm">
+    <div class="card-header">
+      <h5 class="mb-0">Thông tin chung</h5>
+    </div>
+    <div class="card-body">
+      <% if (error) { %>
+        <div class="alert alert-danger" role="alert">
+          <strong>Lỗi:</strong> <%= error %>
+        </div>
+      <% } %>
+
+      <div class="row">
+        <div class="col-md-6">
+          <label for="supplierId" class="form-label">Chọn Nhà cung cấp (*)</label>
+          <select class="form-select" id="supplierId" name="supplierId" required>
+            <option value="" selected disabled>-- Chọn một nhà cung cấp --</option>
+            <% suppliers.forEach(supplier => { %>
+              <option value="<%= supplier.id %>"><%= supplier.tenNhaCungCap %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label for="nguoiNhap" class="form-label">Người nhập kho</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            id="nguoiNhap" 
+            value="<%= user.hoTen %> (<%= user.vaiTro %>)" 
+            disabled
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Chi tiết sản phẩm nhập kho</h5>
+      <button type="button" class="btn btn-success btn-sm" id="add-item-btn">
+        + Thêm sản phẩm
+      </button>
+    </div>
+    <div class="card-body">
+      <table class="table">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 25%;">Sản phẩm (*)</th>
+            <th style="width: 15%;">Số lô (*)</th>
+            <th style="width: 15%;">Hạn sử dụng (*)</th>
+            <th style="width: 15%;">Số lượng (ĐV cơ sở) (*)</th>
+            <th style="width: 20%;">Giá nhập / 1 ĐV (*)</th>
+            <th style="width: 10%;"></th>
+          </tr>
+        </thead>
+        <tbody id="item-list">
+          </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="mt-4 text-end">
+    <a href="/" class="btn btn-secondary">Hủy</a>
+    <button type="submit" class="btn btn-primary btn-lg">Lưu Phiếu Nhập</button>
+  </div>
+</form>
+
+<template id="item-row-template">
+  <tr>
+    <td>
+      <select class="form-select" name="productId" required>
+        <option value="" selected disabled>-- Chọn sản phẩm --</option>
+        <% products.forEach(product => { %>
+          <option value="<%= product.id %>">
+            <%= product.tenSanPham %> (<%= product.donViCoSo %>)
+          </option>
+        <% }) %>
+      </select>
+    </td>
+    <td>
+      <input type="text" class="form-control" name="soLo" placeholder="Ví dụ: L2401" required>
+    </td>
+    <td>
+      <input type="date" class="form-control" name="hanSuDung" required>
+    </td>
+    <td>
+      <input type="number" class="form-control" name="soLuong" min="1" placeholder="0" required>
+    </td>
+    <td>
+      <input type="number" class="form-control" name="giaNhap" min="0" placeholder="0" required>
+    </td>
+    <td>
+      <button type="button" class="btn btn-danger btn-sm remove-item-btn">Xóa</button>
+    </td>
+  </tr>
+</template>
+
+
+<%- include('../partials/footer') %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const addItemBtn = document.getElementById('add-item-btn');
+    const itemList = document.getElementById('item-list');
+    const template = document.getElementById('item-row-template');
+    let itemIndex = 0; // Biến đếm để tạo name attribute duy nhất
+
+    // Hàm thêm một dòng sản phẩm mới
+    function addNewRow() {
+      // Sao chép nội dung từ template
+      const newRow = template.content.cloneNode(true).querySelector('tr');
+
+      // Cập nhật thuộc tính 'name' cho các input
+      // Đây là phần quan trọng để Express có thể đọc 'req.body.items'
+      newRow.querySelector('select[name="productId"]').name = `items[${itemIndex}][productId]`;
+      newRow.querySelector('input[name="soLo"]').name = `items[${itemIndex}][soLo]`;
+      newRow.querySelector('input[name="hanSuDung"]').name = `items[${itemIndex}][hanSuDung]`;
+      newRow.querySelector('input[name="soLuong"]').name = `items[${itemIndex}][soLuong]`;
+      newRow.querySelector('input[name="giaNhap"]').name = `items[${itemIndex}][giaNhap]`;
+
+      // Gán sự kiện 'click' cho nút "Xóa"
+      newRow.querySelector('.remove-item-btn').addEventListener('click', function () {
+        itemList.removeChild(newRow);
+      });
+
+      // Thêm dòng mới vào bảng
+      itemList.appendChild(newRow);
+      itemIndex++; // Tăng biến đếm
+    }
+
+    // Gán sự kiện 'click' cho nút "Thêm sản phẩm"
+    addItemBtn.addEventListener('click', addNewRow);
+
+    // Tự động thêm 1 dòng trống khi tải trang
+    addNewRow();
+  });
+</script>
