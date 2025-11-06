@@ -1,0 +1,72 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3"><%= title %></h1>
+  <a href="/stock-movement/add" class="btn btn-primary">
+    + Tạo Phiếu Xuất mới
+  </a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">Mã Phiếu</th>
+          <th scope="col">Ngày TH</th>
+          <th scope="col">Loại Phiếu</th>
+          <th scope="col">Chi tiết</th>
+          <th scope="col">Sản phẩm (SL)</th>
+          <th scope="col">Người tạo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (movements.length === 0) { %>
+          <tr>
+            <td colspan="6" class="text-center">Chưa có phiếu xuất kho nào.</td>
+          </tr>
+        <% } %>
+
+        <% movements.forEach(movement => { %>
+          <tr>
+            <td><strong>#<%= movement.id %></strong></td>
+            <td>
+              <%= new Date(movement.ngayThucHien).toLocaleString('vi-VN') %>
+            </td>
+            <td>
+              <% if (movement.loaiPhieu === 'Xuất Hủy') { %>
+                <span class="badge bg-danger">Xuất Hủy</span>
+              <% } else { %>
+                <span class="badge bg-info">Chuyển kho</span>
+              <% } %>
+            </td>
+
+            <td>
+              <% if (movement.loaiPhieu === 'Xuất Hủy') { %>
+                Lý do: <%= movement.lyDo %>
+              <% } else if (movement.ChiNhanhNhan) { %>
+                Đến: <strong><%= movement.ChiNhanhNhan.tenChiNhanh %></strong>
+              <% } %>
+            </td>
+
+            <td>
+              <% const item = movement.StockMovementItems[0]; %>
+              <% if (item) { %>
+                <%= item.Product.tenSanPham %> (Lô: <%= item.Batch.soLo %>)
+                <br>
+                <small class="text-muted">SL: <%= item.soLuong %></small>
+              <% } %>
+              <% if (movement.StockMovementItems.length > 1) { %>
+                <small class="d-block">(và <%= movement.StockMovementItems.length - 1 %> sản phẩm khác)</small>
+              <% } %>
+            </td>
+
+            <td><%= movement.User.hoTen %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

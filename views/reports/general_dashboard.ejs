@@ -1,0 +1,138 @@
+<%- include('../partials/header') %>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">Doanh thu Hôm nay (Toàn chuỗi)</h6>
+        <h2 class="card-title text-primary">
+          <%= new Intl.NumberFormat('vi-VN').format(salesToday?.totalRevenue || 0) %> VNĐ
+        </h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">Hóa đơn Hôm nay (Toàn chuỗi)</h6>
+        <h2 class="card-title"><%= salesToday?.totalInvoices || 0 %></h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">Tổng Giá trị Kho (Toàn chuỗi)</h6>
+        <h2 class="card-title text-success">
+          <%= new Intl.NumberFormat('vi-VN').format(totalInventoryValue || 0) %> VNĐ
+        </h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-8">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title">Doanh thu các Chi nhánh (30 ngày qua)</h5>
+        <canvas id="salesByBranchChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title">Top 5 Sản phẩm bán chạy (Toàn chuỗi)</h5>
+        <canvas id="topProductsChainChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<%- include('../partials/footer') %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const formatter = new Intl.NumberFormat('vi-VN');
+
+    // --- 1. Biểu đồ Doanh thu Chi nhánh ---
+    const salesByBranchData = <%- JSON.stringify(salesByBranch || []) %>;
+
+    const branchLabels = salesByBranchData.map(b => b["Branch.tenChiNhanh"]);
+    const branchValues = salesByBranchData.map(b => b.totalRevenue);
+
+    const ctxBranchSales = document.getElementById('salesByBranchChart').getContext('2d');
+    new Chart(ctxBranchSales, {
+      type: 'bar',
+      data: {
+        labels: branchLabels,
+        datasets: [{
+          label: 'Doanh thu (VNĐ)',
+          data: branchValues,
+          backgroundColor: 'rgba(40, 167, 69, 0.6)',
+          borderColor: 'rgba(40, 167, 69, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: value => formatter.format(value) + ' VNĐ'
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => 'Doanh thu: ' + formatter.format(ctx.raw) + ' VNĐ'
+            }
+          }
+        }
+      }
+    });
+
+    // --- 2. Biểu đồ Top 5 Sản phẩm ---
+    const topProductsData = <%- JSON.stringify(top5ProductsChain || []) %>;
+
+    const productLabels = topProductsData.map(p => p["Product.tenSanPham"]);
+    const productValues = topProductsData.map(p => p.totalSold);
+
+    const ctxTopProducts = document.getElementById('topProductsChainChart').getContext('2d');
+    new Chart(ctxTopProducts, {
+      type: 'doughnut',
+      data: {
+        labels: productLabels,
+        datasets: [{
+          label: 'Số lượng bán',
+          data: productValues,
+          backgroundColor: [
+            'rgba(0, 123, 255, 0.7)',
+            'rgba(23, 162, 184, 0.7)',
+            'rgba(40, 167, 69, 0.7)',
+            'rgba(255, 193, 7, 0.7)',
+            'rgba(220, 53, 69, 0.7)'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.label}: ${ctx.raw} (ĐV)`
+            }
+          }
+        }
+      }
+    });
+
+  });
+</script>

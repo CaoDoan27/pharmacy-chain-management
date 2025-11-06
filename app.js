@@ -11,6 +11,12 @@ const supplierRoutes = require('./routes/supplierRoutes');
 const goodsReceiptRoutes = require('./routes/goodsReceiptRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const customerRoutes = require('./routes/customerRoutes');
+const posRoutes = require('./routes/posRoutes');
+const reportRoutes = require('./routes/reportRoutes');
+const purchaseOrderRoutes = require('./routes/purchaseOrderRoutes');
+const stockMovementRoutes = require('./routes/stockMovementRoutes');
+const promotionRoutes = require('./routes/promotionRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -47,13 +53,21 @@ app.use('/suppliers', supplierRoutes);
 app.use('/goods-receipt', goodsReceiptRoutes);
 app.use('/inventory', inventoryRoutes);
 app.use('/customers', customerRoutes);
+app.use('/pos', posRoutes);
+app.use('/reports', reportRoutes);
+app.use('/purchase-order', purchaseOrderRoutes);
+app.use('/stock-movement', stockMovementRoutes);
+app.use('/promotions', promotionRoutes);
+app.use('/users', userRoutes);
 
 app.get('/', isAuth, (req, res) => {
   res.render('index', { title: 'Trang Chủ' });
 });
 
 // 5. Khởi động server
-sequelize.sync({ alter: true }).then(() => {
+// --- ĐÃ SỬA LỖI Ở ĐÂY ---
+// Xóa { alter: true } để tránh lỗi ER_TOO_MANY_KEYS
+sequelize.sync().then(() => { 
   console.log('✅ Đã kết nối Database & đồng bộ hóa models thành công.');
   app.listen(PORT, () => {
     console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);

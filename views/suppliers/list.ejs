@@ -15,6 +15,7 @@
           <th scope="col">Tên Nhà cung cấp</th>
           <th scope="col">Số điện thoại</th>
           <th scope="col">Email</th>
+          <th scope="col">Công nợ (Phải trả)</th>
           <th scope="col">Trạng thái</th>
           <th scope="col" class="text-end">Hành động</th>
         </tr>
@@ -25,6 +26,11 @@
             <td><strong><%= supplier.tenNhaCungCap %></strong></td>
             <td><%= supplier.soDienThoai %></td>
             <td><%= supplier.email %></td>
+            <td>
+              <strong class="text-danger">
+                <%= new Intl.NumberFormat('vi-VN').format(supplier.congNo) %> VNĐ
+              </strong>
+            </td>
             <td>
               <% if (supplier.trangThai === 'Đang hoạt động') { %>
                 <span class="badge bg-success">Đang hoạt động</span>

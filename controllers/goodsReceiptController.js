@@ -36,16 +36,12 @@ exports.getCreateReceipt = async (req, res) => {
   }
 };
 
-// 2. Xử lý Logic khi Lưu Phiếu Nhập (UC-03)
+// 2. Xử lý Logic khi Lưu Phiếu Nhập (UC-03) - (ĐÃ CẬP NHẬT CÔNG NỢ)
 exports.postCreateReceipt = async (req, res) => {
-  // Dùng transaction để đảm bảo toàn vẹn dữ liệu
-  // Hoặc tất cả cùng thành công, hoặc tất cả cùng thất bại
   const t = await sequelize.transaction(); 
 
   try {
     const { supplierId, items } = req.body;
-
-    // Lấy thông tin người dùng và chi nhánh từ session
     const { id: userId, branchId } = req.session.user;
 
     if (!items || items.length === 0) {
@@ -53,8 +49,9 @@ exports.postCreateReceipt = async (req, res) => {
     }
 
     // --- Bắt đầu Transaction ---
+    let totalReceiptValue = 0; // Biến mới để tính tổng giá trị phiếu
 
-    // Bước 1: Tạo Phiếu Nhập Kho (bảng GoodsReceipt)
+    // Bước 1: Tạo Phiếu Nhập Kho
     const receipt = await GoodsReceipt.create({
       userId: userId,
       supplierId: supplierId,
@@ -62,17 +59,18 @@ exports.postCreateReceipt = async (req, res) => {
       ngayNhap: new Date()
     }, { transaction: t });
 
-    // Bước 2: Lặp qua từng sản phẩm trong form
+    // Bước 2: Lặp qua từng sản phẩm
     for (const item of items) {
-      // Dữ liệu từ form
       const productId = parseInt(item.productId);
       const soLuong = parseInt(item.soLuong);
       const giaNhap = parseFloat(item.giaNhap);
       const soLo = item.soLo;
       const hanSuDung = item.hanSuDung;
 
-      // Bước 2a: Tạo Chi Tiết Phiếu Nhập (bảng GoodsReceiptItem)
-      // Để lưu lại lịch sử
+      // --- LOGIC MỚI: Cộng dồn tổng giá trị phiếu ---
+      totalReceiptValue += (soLuong * giaNhap);
+
+      // Bước 2a: Tạo Chi Tiết Phiếu Nhập (Lịch sử)
       await GoodsReceiptItem.create({
         goodsReceiptId: receipt.id,
         productId: productId,
@@ -82,8 +80,7 @@ exports.postCreateReceipt = async (req, res) => {
         hanSuDung: hanSuDung
       }, { transaction: t });
 
-      // Bước 2b: Cập nhật Tồn Kho (bảng Batches)
-      // Tìm xem lô này đã tồn tại ở chi nhánh này chưa
+      // Bước 2b: Cập nhật Tồn Kho (Batches)
       const [batch, created] = await Batch.findOrCreate({
         where: {
           productId: productId,
@@ -91,7 +88,7 @@ exports.postCreateReceipt = async (req, res) => {
           soLo: soLo,
           hanSuDung: hanSuDung
         },
-        defaults: { // Nếu 'created' là true, nó sẽ dùng giá trị này
+        defaults: {
           soLuongTon: soLuong,
           giaNhap: giaNhap
         },
@@ -99,27 +96,32 @@ exports.postCreateReceipt = async (req, res) => {
       });
 
       if (!created) {
-        // Nếu lô đã tồn tại (created == false), cộng dồn số lượng
         batch.soLuongTon += soLuong;
-        // Cập nhật lại giá nhập (thường lấy giá mới nhất)
         batch.giaNhap = giaNhap; 
         await batch.save({ transaction: t });
       }
     }
 
-    // Bước 3: Nếu mọi thứ thành công, commit transaction
+    // --- BƯỚC 3 (MỚI): CẬP NHẬT CÔNG NỢ CHO NHÀ CUNG CẤP ---
+    if (totalReceiptValue > 0) {
+      // Dùng 'increment' để cộng dồn một cách an toàn
+      await Supplier.increment(
+        { congNo: totalReceiptValue }, // Cộng giá trị này
+        { where: { id: supplierId }, transaction: t } // Cho NCC này
+      );
+    }
+
+    // Bước 4: Commit transaction
     await t.commit();
 
-    // Chuyển hướng về trang chủ (hoặc trang danh sách phiếu nhập sau này)
-    res.redirect('/'); 
+    // Chuyển hướng về trang lịch sử để xem ngay
+    res.redirect('/goods-receipt'); 
 
   } catch (err) {
-    // Bước 4: Nếu có lỗi, rollback tất cả thay đổi
+    // Bước 5: Rollback nếu có lỗi
     await t.rollback();
 
     console.log("Lỗi khi tạo phiếu nhập:", err);
-
-    // Tải lại trang form và báo lỗi
     const suppliers = await Supplier.findAll({ where: { trangThai: 'Đang hoạt động' } });
     const products = await Product.findAll({ where: { trangThai: 'Đang kinh doanh' } });
 
@@ -127,7 +129,7 @@ exports.postCreateReceipt = async (req, res) => {
       title: 'Tạo Phiếu Nhập Kho',
       suppliers: suppliers,
       products: products,
-      error: err.message // Gửi lỗi ra view
+      error: err.message
     });
   }
 };

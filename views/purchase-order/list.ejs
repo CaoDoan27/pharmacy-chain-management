@@ -1,0 +1,66 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3"><%= title %></h1>
+  <a href="/purchase-order/add" class="btn btn-primary">
+    + Tạo Đơn Đặt Hàng mới
+  </a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">Mã Đơn</th>
+          <th scope="col">Ngày đặt</th>
+          <th scope="col">Nhà cung cấp</th>
+          <th scope="col">Tổng tiền Dự kiến</th>
+          <th scope="col">Trạng thái</th>
+          <th scope="col" class="text-end">Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (orders.length === 0) { %>
+          <tr>
+            <td colspan="6" class="text-center">Chưa có đơn đặt hàng nào.</td>
+          </tr>
+        <% } %>
+
+        <% orders.forEach(order => { %>
+          <tr>
+            <td><strong>#<%= order.id %></strong></td>
+            <td>
+              <%= new Date(order.ngayDat).toLocaleString('vi-VN') %>
+            </td>
+            <td><%= order.Supplier.tenNhaCungCap %></td>
+
+            <td>
+              <%= new Intl.NumberFormat('vi-VN').format(order.tongTienDuKien || 0) %> VNĐ
+            </td>
+
+            <td>
+              <% if (order.trangThai === 'Đã hoàn thành') { %>
+                <span class="badge bg-success">Đã hoàn thành</span>
+              <% } else { %>
+                <span class="badge bg-info"><%= order.trangThai %></span>
+              <% } %>
+            </td>
+
+            <td class="text-end">
+              <% if (order.trangThai === 'Đã gửi') { %>
+                <form action="/purchase-order/complete/<%= order.id %>" method="POST" class="d-inline">
+                  <button type="submit" class="btn btn-outline-success btn-sm">
+                    Đánh dấu Hoàn thành
+                  </button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

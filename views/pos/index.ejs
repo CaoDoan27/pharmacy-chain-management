@@ -1,0 +1,750 @@
+<%- include('../partials/header') %>
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+}
+
+    .pos-container {
+      display: flex;
+      gap: 20px;
+}
+
+    .pos-left-column {
+      flex: 6;
+/* 60% */
+    }
+
+    .pos-right-column {
+      flex: 4;
+/* 40% */
+    }
+
+    .search-results-box {
+      max-height: 250px;
+overflow-y: auto;
+      border: 1px solid #dee2e6;
+      border-radius: 0.375rem;
+    }
+
+    .search-results-box .list-group-item {
+      cursor: pointer;
+}
+
+    .search-results-box .list-group-item:hover {
+      background-color: #f0f0f0;
+}
+
+    .cart-table-wrapper {
+      max-height: 400px;
+      overflow-y: auto;
+}
+
+    .customer-info {
+      background-color: #e9ecef;
+      padding: 10px;
+      border-radius: 5px;
+}
+
+    /* CSS cho modal lịch sử */
+    .history-list-item {
+      cursor: pointer;
+}
+
+    .history-list-item:hover {
+      background-color: #f0f0f0;
+}
+
+    /* CSS cho giảm giá */
+    .text-discount {
+      color: #fd7e14;
+/* Bootstrap Orange */
+    }
+
+    /* (MỚI) CSS cho spinner loading tổng tiền */
+    .total-loading-spinner {
+      width: 1.2rem;
+height: 1.2rem;
+    }
+  </style>
+
+  <div class="pos-container">
+
+    <div class="pos-left-column">
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <label for="product-search-input" class="form-label fw-bold">1.
+Tìm kiếm sản phẩm</label>
+          <input type="text" class="form-control form-control-lg" id="product-search-input"
+            placeholder="Gõ tên thuốc (ví dụ: Panadol)...">
+          <div class="search-results-box mt-2" id="product-search-results"></div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h5 class="mb-0">2.
+Giỏ hàng</h5>
+        </div>
+        <div class="card-body">
+          <div class="cart-table-wrapper">
+            <table class="table align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Sản phẩm</th>
+       
+           <th style="width: 120px;">Số lượng (ĐV)</th>
+
+                  <th>Đơn giá</th>
+                  <th>Thành tiền</th>
+                  <th></th>
+                </tr>
+             
+ </thead>
+              <tbody id="cart-items-tbody">
+
+                <tr>
+                  <td colspan="5" class="text-center text-muted" id="cart-empty-msg">Giỏ hàng đang trống</td>
+                </tr>
+              </tbody>
+            </table>
+ 
+         </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="pos-right-column">
+
+      <div class="card shadow-sm mb-3">
+
+        <div class="card-body">
+          <label for="customer-search-input" class="form-label fw-bold">3.
+Khách hàng (Không bắt buộc)</label>
+
+          <button class="btn btn-outline-secondary btn-sm float-end" id="history-btn" data-bs-toggle="modal"
+            data-bs-target="#history-modal">
+            Lịch sử Bán hàng
+          </button>
+
+          <input type="text" class="form-control" id="customer-search-input" placeholder="Gõ SĐT khách hàng...">
+
+          <div class="search-results-box mt-2" id="customer-search-results"></div>
+
+          <div id="customer-info-box" class="mt-2 
+d-none">
+            <div class="customer-info">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong id="customer-name"></strong>
+                  <span id="customer-rank" class="badge"></span>
+               
+ </div>
+                <button class="btn btn-outline-danger btn-sm" id="remove-customer-btn">Xóa</button>
+              </div>
+              <small class="d-block mt-1">Điểm hiện có: <strong id="customer-points">0</strong></small>
+            </div>
+
+            <div id="spend-points-group" class="mt-2">
+              <label for="spend-points-input" class="form-label">Sử dụng điểm</label>
+ 
+             <div class="input-group">
+                <input type="number" class="form-control" id="spend-points-input" placeholder="Nhập số điểm..." min="0">
+                <span class="input-group-text">= <span id="discount-preview" class="text-success fw-bold">0
+                    VNĐ</span></span>
+              </div>
+        
+    </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h5 class="mb-0">4.
+Thanh toán</h5>
+        </div>
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              Tổng cộng (<span id="total-items-count">0</span> sản phẩm)
+              <span id="subtotal-amount">0 VNĐ</span>
+            </li>
+
+       
+     <li id="promo-row"
+              class="list-group-item d-flex justify-content-between align-items-center text-discount d-none">
+              <span>
+                Khuyến mãi
+                <div id="promo-loading-spinner" class="spinner-border spinner-border-sm text-warning ms-2 d-none"
+                  role="status">
+    
+              <span class="visually-hidden">Loading...</span>
+                </div>
+              </span>
+              <span id="promo-amount">-0 VNĐ</span>
+            </li>
+
+            <li id="discount-row"
+              
+class="list-group-item d-flex justify-content-between align-items-center text-success d-none">
+              Giảm giá (từ điểm)
+              <span id="discount-amount">-0 VNĐ</span>
+            </li>
+
+            <li class="list-group-item d-flex justify-content-between align-items-center fw-bold h4">
+
+              TỔNG TIỀN
+              <span id="total-amount" class="text-danger">0 
+VNĐ</span>
+            </li>
+          </ul>
+
+          <div class="d-grid mt-3">
+            <button class="btn btn-primary btn-lg" id="checkout-btn" disabled>
+              THANH TOÁN (F9)
+            </button>
+
+          </div>
+
+          <div 
+id="checkout-alert" class="alert mt-3 d-none" role="alert"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="modal fade" id="history-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="history-modal-title">Lịch sử Bán hàng (20 hóa đơn gần nhất)</h5>
+          <button type="button" class="btn btn-secondary btn-sm d-none" id="history-back-btn">&larr;
+Quay lại Danh
+            sách</button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="history-modal-body">
+          <div class="text-center">
+            <div class="spinner-border" role="status"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+</div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <%- include('../partials/footer') %>
+
+    <script>
+      // === CẤU HÌNH ===
+      const POINT_RATE = 20;
+// 1 điểm = 20 VNĐ
+
+      // Hàm format tiền tệ
+      const formatter = new Intl.NumberFormat('vi-VN');
+// Trạng thái (State) của trang POS
+      let cart = [];
+// { id, name, price, quantity }
+      let selectedCustomer = null;
+// { id, hoTen, hangThanhVien, diemTichLuy }
+
+      // (MỚI) Biến lưu trữ Khuyến mãi
+      let promotionDiscount = 0;
+// Số tiền giảm từ KM
+      let subtotal = 0;
+// Tổng tiền gốc
+      let isCalculatingPromo = false;
+// Cờ debounce cho API
+
+
+      // Lấy các DOM element
+      const productSearchInput = document.getElementById('product-search-input');
+const productSearchResults = document.getElementById('product-search-results');
+      const customerSearchInput = document.getElementById('customer-search-input');
+      const customerSearchResults = document.getElementById('customer-search-results');
+      const customerInfoBox = document.getElementById('customer-info-box');
+      const customerNameEl = document.getElementById('customer-name');
+const customerRankEl = document.getElementById('customer-rank');
+      const removeCustomerBtn = document.getElementById('remove-customer-btn');
+      const cartTbody = document.getElementById('cart-items-tbody');
+      const cartEmptyMsg = document.getElementById('cart-empty-msg');
+      const totalItemsCountEl = document.getElementById('total-items-count');
+const subtotalAmountEl = document.getElementById('subtotal-amount');
+      const totalAmountEl = document.getElementById('total-amount');
+      const checkoutBtn = document.getElementById('checkout-btn');
+      const checkoutAlert = document.getElementById('checkout-alert');
+      const historyBtn = document.getElementById('history-btn');
+const historyModal = new bootstrap.Modal(document.getElementById('history-modal'));
+      const historyModalBody = document.getElementById('history-modal-body');
+      const historyModalTitle = document.getElementById('history-modal-title');
+      const historyBackBtn = document.getElementById('history-back-btn');
+// DOM element cho Tiêu điểm
+      const customerPointsEl = document.getElementById('customer-points');
+      const spendPointsGroup = document.getElementById('spend-points-group');
+const spendPointsInput = document.getElementById('spend-points-input');
+      const discountPreview = document.getElementById('discount-preview');
+      const discountRow = document.getElementById('discount-row');
+      const discountAmountEl = document.getElementById('discount-amount');
+// (MỚI) DOM element cho Khuyến mãi
+      const promoRow = document.getElementById('promo-row');
+      const promoAmountEl = document.getElementById('promo-amount');
+const promoLoadingSpinner = document.getElementById('promo-loading-spinner');
+
+
+      // Utility: Hàm Debounce
+      function debounce(func, delay) {
+        let timeout;
+return function (...args) {
+          clearTimeout(timeout);
+timeout = setTimeout(() => func.apply(this, args), delay);
+        };
+      }
+
+      // --- 1. LOGIC TÌM KIẾM SẢN PHẨM ---
+      // (Không thay đổi)
+      async function searchProducts(query) {
+        if (query.length < 2) { productSearchResults.innerHTML = '';
+return; }
+        try {
+          const res = await axios.get(`/pos/api/search-products?q=${query}`);
+renderProductResults(res.data);
+        } catch (err) { console.error('Lỗi tìm sản phẩm:', err);
+}
+      }
+      function renderProductResults(products) {
+        if (products.length === 0) { productSearchResults.innerHTML = '<div class="list-group-item">Không tìm thấy sản phẩm.</div>';
+return; }
+        productSearchResults.innerHTML = `
+      <ul class="list-group">
+        ${products.map(product => `
+          <li class="list-group-item d-flex justify-content-between align-items-center" 
+              data-product-id="${product.id}" data-product-name="${product.tenSanPham}" data-product-price="${product.giaBan}">
+            <div><strong>${product.tenSanPham}</strong> (${product.donViCoSo})<br><small class="text-muted">${product.hoatChat}</small></div>
+            <span class="badge bg-success">${formatter.format(product.giaBan)} VNĐ</span>
+          </li>`).join('')}
+  
+    </ul>`;
+      }
+      productSearchResults.addEventListener('click', (e) => {
+        const item = e.target.closest('li'); if (!item) return;
+        const product = { id: parseInt(item.dataset.productId), name: item.dataset.productName, price: parseFloat(item.dataset.productPrice), quantity: 1 };
+        addToCart(product);
+        productSearchInput.value = ''; productSearchResults.innerHTML = '';
+      });
+productSearchInput.addEventListener('input', debounce((e) => { searchProducts(e.target.value); }, 300));
+
+
+      // --- 2. LOGIC TÌM KIẾM KHÁCH HÀNG ---
+      // (Không thay đổi)
+      async function searchCustomers(query) {
+        if (query.length < 3) { customerSearchResults.innerHTML = '';
+return; }
+        try {
+          const res = await axios.get(`/pos/api/search-customers?q=${query}`);
+renderCustomerResults(res.data);
+        } catch (err) { console.error('Lỗi tìm khách hàng:', err);
+}
+      }
+      function renderCustomerResults(customers) {
+        if (customers.length === 0) { customerSearchResults.innerHTML = '<div class="list-group-item">Không tìm thấy khách hàng.</div>';
+return; }
+        customerSearchResults.innerHTML = `
+      <ul class="list-group">
+        ${customers.map(customer => `
+          <li class="list-group-item" 
+              data-customer-id="${customer.id}"
+              data-customer-name="${customer.hoTen}"
+              data-customer-rank="${customer.hangThanhVien}"
+              data-customer-points="${customer.diemTichLuy}">
+    
+        <strong>${customer.hoTen}</strong> - ${customer.soDienThoai}
+          </li>`).join('')}
+      </ul>`;
+}
+      customerSearchResults.addEventListener('click', (e) => {
+        const item = e.target.closest('li'); if (!item) return;
+        selectCustomer({
+          id: parseInt(item.dataset.customerId),
+          hoTen: item.dataset.customerName,
+          hangThanhVien: item.dataset.customerRank,
+          points: parseInt(item.dataset.customerPoints)
+        });
+      });
+// (Đã cập nhật) Hàm chọn/xóa khách hàng
+      function selectCustomer(customer) {
+        selectedCustomer = customer;
+if (customer) {
+          customerNameEl.textContent = customer.hoTen;
+          customerRankEl.textContent = customer.hangThanhVien;
+customerRankEl.className = 'badge bg-info text-dark';
+          customerPointsEl.textContent = formatter.format(customer.points);
+
+          customerInfoBox.classList.remove('d-none');
+          spendPointsGroup.classList.remove('d-none');
+          customerSearchInput.value = '';
+          customerSearchInput.disabled = true;
+          customerSearchResults.innerHTML = '';
+} else {
+          selectedCustomer = null;
+          customerInfoBox.classList.add('d-none');
+          spendPointsGroup.classList.add('d-none');
+          spendPointsInput.value = '';
+customerSearchInput.disabled = false;
+          customerSearchInput.value = '';
+        }
+        updateTotals();
+// Cập nhật tổng tiền
+      }
+
+      removeCustomerBtn.addEventListener('click', () => {
+        selectCustomer(null);
+      });
+customerSearchInput.addEventListener('input', debounce((e) => {
+        searchCustomers(e.target.value);
+      }, 300));
+// Gán sự kiện cho ô tiêu điểm
+      spendPointsInput.addEventListener('input', () => {
+        updateTotals(); // Cập nhật tổng tiền mỗi khi gõ
+      });
+// --- 3. LOGIC GIỎ HÀNG (CART) ---
+      // (Đã cập nhật)
+      function addToCart(product) {
+        const existingItem = cart.find(item => item.id === product.id);
+if (existingItem) {
+          existingItem.quantity += 1;
+} else {
+          cart.push(product);
+}
+        renderCart();
+      }
+      function updateCartQuantity(productId, newQuantity) {
+        const item = cart.find(item => item.id === productId);
+if (item) {
+          item.quantity = newQuantity;
+if (item.quantity <= 0) {
+            removeFromCart(productId);
+} else {
+            renderCart();
+}
+        }
+      }
+      function removeFromCart(productId) {
+        cart = cart.filter(item => item.id !== productId);
+renderCart();
+      }
+
+      // (Đã cập nhật) Hàm renderCart giờ CHỈ render bảng
+      function renderCart() {
+        if (cart.length === 0) {
+          cartTbody.innerHTML = '';
+cartTbody.appendChild(cartEmptyMsg);
+        } else {
+          cartEmptyMsg.remove();
+          cartTbody.innerHTML = '';
+cart.forEach(item => {
+            const itemTotal = item.price * item.quantity;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+          <td>${item.name}</td>
+          <td>
+            <input 
+              type="number" class="form-control form-control-sm" 
+  
+            value="${item.quantity}" min="1"
+              onchange="updateCartQuantity(${item.id}, parseInt(this.value))"
+            >
+          </td>
+          <td>${formatter.format(item.price)}</td>
+          <td><strong>${formatter.format(itemTotal)}</strong></td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="removeFromCart(${item.id})">&times;</button>
+    
+      </td>
+        `;
+            cartTbody.appendChild(row);
+          });
+}
+
+        // (MỚI) Khi giỏ hàng thay đổi, gọi API tính toán
+        calculatePromotionsAPI();
+checkoutBtn.disabled = (cart.length === 0);
+      }
+
+      // (MỚI) Hàm gọi API tính toán khuyến mãi (có debounce)
+      const calculatePromotionsAPI = debounce(async () => {
+        if (cart.length === 0) {
+          promotionDiscount = 0;
+          subtotal = 0;
+          updateTotals(); // Cập nhật (để reset về 0)
+          return;
+    
+    }
+
+        isCalculatingPromo = true;
+        promoLoadingSpinner.classList.remove('d-none'); // Bật spinner
+
+        try {
+          const cartPayload = cart.map(item => ({ productId: item.id, quantity: item.quantity }));
+          const res = await axios.post('/pos/api/calculate-promo', { cart: cartPayload });
+
+          // Lưu kết quả từ server
+          promotionDiscount = res.data.promotionDiscount;
+ 
+         subtotal = res.data.subtotal;
+
+        } catch (err) {
+          console.error("Lỗi khi tính khuyến mãi:", err);
+          promotionDiscount = 0; // Reset nếu lỗi
+        } finally {
+          isCalculatingPromo = false;
+          promoLoadingSpinner.classList.add('d-none');
+// Tắt spinner
+          updateTotals();
+// Cập nhật tổng tiền với con số KM mới nhất
+        }
+      }, 500);
+// Trì hoãn 500ms sau lần thay đổi cuối cùng
+
+      // (Đã cập nhật) Hàm cập nhật tổng tiền
+      function updateTotals() {
+        let totalItems = 0;
+cart.forEach(item => {
+          totalItems += item.quantity;
+        });
+const amountAfterPromotion = subtotal - promotionDiscount;
+
+        let pointsToSpend = parseInt(spendPointsInput.value) || 0;
+        let discountFromPoints = 0;
+if (selectedCustomer && pointsToSpend > 0) {
+          if (pointsToSpend > selectedCustomer.points) {
+            pointsToSpend = selectedCustomer.points;
+spendPointsInput.value = pointsToSpend;
+          }
+          discountFromPoints = pointsToSpend * POINT_RATE;
+if (discountFromPoints > amountAfterPromotion) {
+            discountFromPoints = amountAfterPromotion;
+pointsToSpend = Math.floor(amountAfterPromotion / POINT_RATE);
+            spendPointsInput.value = pointsToSpend;
+          }
+          discountPreview.textContent = `${formatter.format(discountFromPoints)} VNĐ`;
+discountAmountEl.textContent = `-${formatter.format(discountFromPoints)} VNĐ`;
+          discountRow.classList.remove('d-none');
+        } else {
+          discountRow.classList.add('d-none');
+}
+
+        if (promotionDiscount > 0) {
+          promoAmountEl.textContent = `-${formatter.format(promotionDiscount)} VNĐ`;
+promoRow.classList.remove('d-none');
+        } else {
+          promoRow.classList.add('d-none');
+}
+
+        const finalTotal = amountAfterPromotion - discountFromPoints;
+
+        totalItemsCountEl.textContent = totalItems;
+subtotalAmountEl.textContent = `${formatter.format(subtotal)} VNĐ`;
+        totalAmountEl.textContent = `${formatter.format(finalTotal)} VNĐ`;
+      }
+
+
+      // --- 4. LOGIC THANH TOÁN (ĐÃ SỬA LỖI) ---
+
+      checkoutBtn.addEventListener('click', handleCheckout);
+async function handleCheckout() {
+        if (isCalculatingPromo) {
+          checkoutAlert.className = 'alert alert-warning mt-3';
+checkoutAlert.textContent = 'Đang tính toán khuyến mãi, vui lòng đợi...';
+          return;
+}
+
+        checkoutBtn.disabled = true;
+        checkoutBtn.textContent = 'Đang xử lý...';
+        checkoutAlert.classList.add('d-none');
+const pointsToSpend = parseInt(spendPointsInput.value) || 0;
+
+        const payload = {
+          customerId: selectedCustomer ?
+selectedCustomer.id : null,
+          pointsToSpend: pointsToSpend,
+          cart: cart.map(item => ({
+            productId: item.id,
+            quantity: item.quantity
+          }))
+        };
+try {
+          const res = await axios.post('/pos/checkout', payload);
+checkoutAlert.className = 'alert alert-success mt-3';
+          checkoutAlert.textContent = `${res.data.message} (Mã Hóa đơn: #${res.data.invoiceId})`;
+
+          promotionDiscount = res.data.discounts.promotion;
+// --- SỬA LỖI Ở ĐÂY ---
+          // (XÓA BỎ đoạn code tự tính toán)
+
+          // (THAY BẰNG) Đọc số điểm mới từ server
+          if (selectedCustomer && res.data.newPoints !== null) {
+            selectedCustomer.points = res.data.newPoints;
+customerPointsEl.textContent = formatter.format(selectedCustomer.points);
+          }
+          // --- HẾT SỬA LỖI ---
+
+          updateTotals();
+// Cập nhật tổng tiền (để hiển thị 2 dòng giảm giá)
+
+          // Reset trang
+          cart = [];
+selectCustomer(null);
+          setTimeout(() => {
+            renderCart();
+            checkoutAlert.classList.add('d-none');
+            // --- SỬA LỖI NÚT BẤM (MỚI) ---
+            checkoutBtn.disabled = (cart.length === 0);
+            checkoutBtn.textContent = 'THANH TOÁN (F9)';
+            // --- HẾT SỬA LỖI NÚT BẤM ---
+}, 3000);
+        } catch (err) {
+          console.error('Lỗi thanh toán:', err);
+checkoutAlert.className = 'alert alert-danger mt-3';
+          checkoutAlert.textContent = `Lỗi: ${err.response?.data?.message || err.message}`;
+          checkoutBtn.disabled = (cart.length === 0);
+checkoutBtn.textContent = 'THANH TOÁN (F9)';
+        }
+      }
+
+      // --- 5. LOGIC MODAL LỊCH SỬ BÁN HÀNG ---
+      // (Đã cập nhật để hiển thị 4 dòng tiền)
+
+      historyBtn.addEventListener('click', () => {
+        loadHistoryList();
+      });
+historyBackBtn.addEventListener('click', () => {
+        loadHistoryList();
+      });
+async function loadHistoryList() {
+        // ... (Không thay đổi)
+        historyModalTitle.textContent = 'Lịch sử Bán hàng (20 hóa đơn gần nhất)';
+historyBackBtn.classList.add('d-none');
+        historyModalBody.innerHTML = `<div class="text-center"><div class="spinner-border" role="status"></div></div>`;
+        try {
+          const res = await axios.get('/pos/api/history');
+const invoices = res.data;
+          if (invoices.length === 0) {
+            historyModalBody.innerHTML = '<p class="text-center">Chưa có hóa đơn nào.</p>';
+return;
+          }
+          historyModalBody.innerHTML = `
+        <table class="table table-hover">
+          <thead class="table-light">
+            <tr><th>Mã HĐ</th><th>Ngày bán</th><th>Khách hàng</th><th>Người bán</th><th>Tổng tiền</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${invoices.map(inv => `
+              <tr 
+class="history-list-item" onclick="loadHistoryDetail(${inv.id})">
+                <td><strong>#${inv.id}</strong></td>
+                <td>${new Date(inv.ngayBan).toLocaleString('vi-VN')}</td>
+                <td>${inv.Customer ? inv.Customer.hoTen : 'Khách vãng lai'}</td>
+                <td>${inv.User.hoTen}</td>
+                <td>${formatter.format(inv.tongTien)} VNĐ</td>
+           
+     <td><button class="btn btn-outline-primary btn-sm">Xem</button></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`;
+} catch (err) {
+          historyModalBody.innerHTML = '<p class="text-danger">Lỗi khi tải lịch sử.</p>';
+console.error('Lỗi tải lịch sử:', err);
+        }
+      }
+
+      async function loadHistoryDetail(invoiceId) {
+        // ... (Đã cập nhật)
+        historyModalTitle.textContent = `Chi tiết Hóa đơn #${invoiceId}`;
+historyBackBtn.classList.remove('d-none');
+        historyModalBody.innerHTML = `<div class="text-center"><div class="spinner-border" role="status"></div></div>`;
+        try {
+          const res = await axios.get(`/pos/api/history/${invoiceId}`);
+const inv = res.data;
+          const customerInfo = inv.Customer
+            ?
+`<p><strong>Khách hàng:</strong> ${inv.Customer.hoTen} (${inv.Customer.soDienThoai})</p>`
+            : '<p><strong>Khách hàng:</strong> Khách vãng lai</p>';
+const tienGocHTML = `
+        <li class="list-group-item d-flex justify-content-between">
+          <span>Tiền gốc</span>
+          <span>${formatter.format(inv.tienGoc)} VNĐ</span>
+        </li>`;
+const giamGiaKMHTML = (inv.giamGiaKhuyenMai > 0)
+            ?
+`<li class="list-group-item d-flex justify-content-between text-discount">
+             <span>Khuyến mãi</span>
+             <span>-${formatter.format(inv.giamGiaKhuyenMai)} VNĐ</span>
+           </li>`
+            : '';
+const giamGiaDiemHTML = (inv.giamGiaDiem > 0)
+            ?
+`<li class="list-group-item d-flex justify-content-between text-success">
+             <span>Giảm (từ điểm)</span>
+             <span>-${formatter.format(inv.giamGiaDiem)} VNĐ</span>
+           </li>`
+            : '';
+const tongTienHTML = `
+        <li class="list-group-item d-flex justify-content-between fw-bold h5">
+          <span>Tổng tiền (Thực thu)</span>
+          <span class="text-danger">${formatter.format(inv.tongTien)} VNĐ</span>
+        </li>`;
+historyModalBody.innerHTML = `
+        <div class="row mb-3">
+          <div class="col-md-7">
+            <p class="mb-1"><strong>Người bán:</strong> ${inv.User.hoTen}</p>
+            ${customerInfo}
+          </div>
+          <div class="col-md-5">
+            <p class="mb-1"><strong>Ngày bán:</strong> ${new Date(inv.ngayBan).toLocaleString('vi-VN')}</p>
+            <ul 
+class="list-group list-group-flush">
+              ${tienGocHTML}
+              ${giamGiaKMHTML}
+              ${giamGiaDiemHTML}
+              ${tongTienHTML}
+            </ul>
+          </div>
+        </div>
+        <h5 class="mt-3">Chi tiết sản phẩm</h5>
+ 
+       <table class="table table-sm">
+          <thead class="table-light">
+            <tr><th>Sản phẩm</th><th>Số lô</th><th>HSD</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr>
+          </thead>
+          <tbody>
+            ${inv.InvoiceItems.map(item => `
+              <tr>
+               
+ <td><strong>${item.Product.tenSanPham}</strong></td>
+                <td>${item.Batch.soLo}</td>
+                <td>${new Date(item.Batch.hanSuDung).toLocaleDateString('vi-VN')}</td>
+                <td>${item.soLuong}</td>
+                <td>${formatter.format(item.donGia)}</td>
+                <td>${formatter.format(item.soLuong * item.donGia)}</td>
+              </tr>
+  
+          `).join('')}
+          </tbody>
+        </table>`;
+} catch (err) {
+          historyModalBody.innerHTML = '<p class="text-danger">Lỗi khi tải chi tiết hóa đơn.</p>';
+console.error('Lỗi tải chi tiết:', err);
+        }
+      }
+
+    </script>

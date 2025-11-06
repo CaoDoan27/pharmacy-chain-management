@@ -1,0 +1,163 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0"><%= title %></h1>
+  <a href="/purchase-order" class="btn btn-outline-secondary">
+    Xem Lịch sử Đặt hàng &rarr;
+  </a>
+</div>
+
+<form action="/purchase-order/add" method="POST" id="order-form">
+  <div class="card shadow-sm">
+    <div class="card-header">
+      <h5 class="mb-0">Thông tin chung</h5>
+    </div>
+    <div class="card-body">
+      <% if (error) { %>
+        <div class="alert alert-danger" role="alert">
+          <strong>Lỗi:</strong> <%= error %>
+        </div>
+      <% } %>
+
+      <div class="row">
+        <div class="col-md-4">
+          <label for="supplierId" class="form-label">Chọn Nhà cung cấp (*)</label>
+          <select class="form-select" id="supplierId" name="supplierId" required>
+            <option value="" selected disabled>-- Chọn một nhà cung cấp --</option>
+            <% suppliers.forEach(supplier => { %>
+              <option value="<%= supplier.id %>" data-email="<%= supplier.email %>">
+                <%= supplier.tenNhaCungCap %>
+              </option>
+            <% }) %>
+          </select>
+          <small class="text-muted" id="supplier-email-preview"></small>
+        </div>
+        <div class="col-md-4">
+          <label for="nguoiDat" class="form-label">Người đặt hàng</label>
+          <input type="text" class="form-control" id="nguoiDat" value="<%= user.hoTen %>" disabled>
+        </div>
+        <div class="col-md-4">
+          <label for="thoiGianMongMuon" class="form-label">Thời gian mong muốn nhận (*)</label>
+          <input type="date" class="form-control" id="thoiGianMongMuon" name="thoiGianMongMuon" required>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-4">
+          <label for="hinhThucThanhToan" class="form-label">Hình thức thanh toán (*)</label>
+          <select class="form-select" id="hinhThucThanhToan" name="hinhThucThanhToan" required>
+            <option value="Chuyển khoản">Chuyển khoản</option>
+            <option value="Tiền mặt khi nhận hàng">Tiền mặt khi nhận hàng</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="nguoiNhanHang" class="form-label">Người nhận hàng (*)</label>
+          <input type="text" class="form-control" id="nguoiNhanHang" name="nguoiNhanHang" placeholder="Tên người nhận" required>
+        </div>
+        <div class="col-md-4">
+          <label for="sdtNguoiNhan" class="form-label">SĐT Người nhận (*)</label>
+          <input type="text" class="form-control" id="sdtNguoiNhan" name="sdtNguoiNhan" placeholder="SĐT người nhận" required>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Chi tiết sản phẩm đặt hàng</h5>
+      <button type="button" class="btn btn-success btn-sm" id="add-item-btn">
+        + Thêm sản phẩm
+      </button>
+    </div>
+    <div class="card-body">
+      <table class="table">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 70%;">Sản phẩm (*)</th>
+            <th style="width: 20%;">Số lượng (ĐV cơ sở) (*)</th>
+            <th style="width: 10%;"></th>
+          </tr>
+        </thead>
+        <tbody id="item-list">
+          </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <div class="mt-4 text-end">
+    <a href="/purchase-order" class="btn btn-secondary">Hủy</a>
+    <button type="submit" class="btn btn-primary btn-lg">Gửi Đơn Đặt Hàng</button>
+  </div>
+</form>
+
+<template id="item-row-template">
+  <tr>
+    <td>
+      <select class="form-select" name="productId" required>
+        <option value="" selected disabled>-- Chọn sản phẩm --</option>
+        <% products.forEach(product => { %>
+          <option value="<%= product.id %>">
+            <%= product.tenSanPham %> (<%= product.donViCoSo %>)
+          </option>
+        <% }) %>
+      </select>
+    </td>
+    <td>
+      <input type="number" class="form-control" name="soLuongDat" min="1" placeholder="0" required>
+    </td>
+    <td>
+      <button type="button" class="btn btn-danger btn-sm remove-item-btn">Xóa</button>
+    </td>
+  </tr>
+</template>
+
+
+<%- include('../partials/footer') %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const addItemBtn = document.getElementById('add-item-btn');
+    const itemList = document.getElementById('item-list');
+    const template = document.getElementById('item-row-template');
+    let itemIndex = 0;
+
+    function addNewRow() {
+      const newRow = template.content.cloneNode(true).querySelector('tr');
+      
+      newRow.querySelector('select[name="productId"]').name = `items[${itemIndex}][productId]`;
+      newRow.querySelector('input[name="soLuongDat"]').name = `items[${itemIndex}][soLuongDat]`;
+      
+      newRow.querySelector('.remove-item-btn').addEventListener('click', function () {
+        itemList.removeChild(newRow);
+      });
+
+      itemList.appendChild(newRow);
+      itemIndex++;
+    }
+
+    addItemBtn.addEventListener('click', addNewRow);
+    addNewRow(); // Tự động thêm 1 dòng trống
+
+    // Hiển thị email nhà cung cấp khi chọn
+    const supplierSelect = document.getElementById('supplierId');
+    const emailPreview = document.getElementById('supplier-email-preview');
+    supplierSelect.addEventListener('change', function() {
+      const selectedEmail = this.options[this.selectedIndex].dataset.email;
+      if (selectedEmail) {
+        emailPreview.textContent = `Đơn hàng sẽ được gửi đến: ${selectedEmail}`;
+      } else {
+        emailPreview.textContent = 'Nhà cung cấp này chưa có email!';
+      }
+    });
+
+    // Tự động điền ngày hôm nay cho 'Thời gian mong muốn'
+    const today = new Date();
+    today.setDate(today.getDate() + 1); // +1 ngày
+    const tomorrow = today.toISOString().split('T')[0];
+    document.getElementById('thoiGianMongMuon').value = tomorrow;
+    
+    // Tự động điền tên người đặt hàng vào người nhận hàng
+    const tenNguoiDat = "<%= user.hoTen %>";
+    document.getElementById('nguoiNhanHang').value = tenNguoiDat;
+  });
+</script>

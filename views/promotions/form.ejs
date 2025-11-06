@@ -1,0 +1,160 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-3"><%= title %></h1>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    
+    <form 
+      action="<%= isEditing ? '/promotions/edit/' + promotion.id : '/promotions/add' %>" 
+      method="POST"
+      id="promo-form"
+    >
+      
+      <% if (error) { %>
+        <div class="alert alert-danger" role="alert">
+          <%= error %>
+        </div>
+      <% } %>
+
+      <div class="mb-3">
+        <label for="tenChuongTrinh" class="form-label">Tên Chương trình (*)</label>
+        <input 
+          type="text" 
+          class="form-control" 
+          id="tenChuongTrinh" 
+          name="tenChuongTrinh"
+          value="<%= (promotion && promotion.tenChuongTrinh) ? promotion.tenChuongTrinh : '' %>"
+          required
+        >
+      </div>
+      <div class="mb-3">
+        <label for="moTa" class="form-label">Mô tả</label>
+        <textarea class="form-control" id="moTa" name="moTa" rows="2"><%= (promotion && promotion.moTa) ? promotion.moTa : '' %></textarea>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="ngayBatDau" class="form-label">Ngày Bắt đầu (*)</label>
+          <input 
+            type="datetime-local" 
+            class="form-control" 
+            id="ngayBatDau" 
+            name="ngayBatDau"
+            value="<%= (promotion && promotion.ngayBatDau) ? new Date(promotion.ngayBatDau).toISOString().slice(0,16) : '' %>"
+            required
+          >
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="ngayKetThuc" class="form-label">Ngày Kết thúc (*)</label>
+          <input 
+            type="datetime-local" 
+            class="form-control" 
+            id="ngayKetThuc" 
+            name="ngayKetThuc"
+            value="<%= (promotion && promotion.ngayKetThuc) ? new Date(promotion.ngayKetThuc).toISOString().slice(0,16) : '' %>"
+            required
+          >
+        </div>
+      </div>
+
+      <hr>
+      <h5 class="mb-3">Quy tắc Khuyến mãi</h5>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="loaiGiamGia" class="form-label">Loại Giảm giá (*)</label>
+          <select class="form-select" id="loaiGiamGia" name="loaiGiamGia" required>
+            <option value="percentage" <%= (promotion && promotion.loaiGiamGia === 'percentage') ? 'selected' : '' %>>Giảm theo %</option>
+            <option value="fixed" <%= (promotion && promotion.loaiGiamGia === 'fixed') ? 'selected' : '' %>>Giảm tiền cố định (VNĐ)</option>
+          </select>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="giaTriGiam" class="form-label">Giá trị Giảm (*)</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            id="giaTriGiam" 
+            name="giaTriGiam"
+            value="<%= (promotion && promotion.giaTriGiam) ? promotion.giaTriGiam : '0' %>"
+            required
+          >
+          <small id="giaTriHelp" class="form-text text-muted">Nhập 10 (cho 10%) hoặc 20000 (cho 20.000 VNĐ)</small>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label for="dieuKienApDung" class="form-label">Điều kiện Áp dụng (*)</label>
+          <select class="form-select" id="dieuKienApDung" name="dieuKienApDung" required>
+            <option value="all" <%= (promotion && promotion.dieuKienApDung === 'all') ? 'selected' : '' %>>Toàn bộ hóa đơn</option>
+            <option value="category" <%= (promotion && promotion.dieuKienApDung === 'category') ? 'selected' : '' %>>Theo Danh mục Sản phẩm</option>
+            <option value="product" <%= (promotion && promotion.dieuKienApDung === 'product') ? 'selected' : '' %>>Theo Sản phẩm Cụ thể</option>
+          </select>
+        </div>
+        
+        <div class="col-md-8 mb-3" id="giaTriDieuKienGroup">
+          <label for="giaTriDieuKien" class="form-label">Giá trị Điều kiện (*)</label>
+          
+          <select class="form-select" id="giaTriDieuKien_category" name="giaTriDieuKien">
+            <% categories.forEach(cat => { %>
+              <option value="<%= cat %>" <%= (promotion && promotion.giaTriDieuKien === cat) ? 'selected' : '' %>><%= cat %></option>
+            <% }) %>
+          </select>
+
+          <select class="form-select" id="giaTriDieuKien_product" name="giaTriDieuKien">
+            <% products.forEach(prod => { %>
+              <option value="<%= prod.id %>" <%= (promotion && promotion.giaTriDieuKien == prod.id) ? 'selected' : '' %>><%= prod.tenSanPham %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+
+      <hr>
+      
+      <button type="submit" class="btn btn-primary">
+        <%= isEditing ? 'Cập nhật Khuyến mãi' : 'Lưu Khuyến mãi' %>
+      </button>
+      <a href="/promotions" class="btn btn-secondary">Hủy</a>
+
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const dieuKienSelect = document.getElementById('dieuKienApDung');
+    const group = document.getElementById('giaTriDieuKienGroup');
+    const catSelect = document.getElementById('giaTriDieuKien_category');
+    const prodSelect = document.getElementById('giaTriDieuKien_product');
+
+    function toggleDieuKienFields() {
+      const selected = dieuKienSelect.value;
+      
+      if (selected === 'all') {
+        group.classList.add('d-none'); // Ẩn group
+        catSelect.disabled = true;
+        prodSelect.disabled = true;
+      } else if (selected === 'category') {
+        group.classList.remove('d-none');
+        catSelect.classList.remove('d-none');
+        catSelect.disabled = false; // Bật select này
+        prodSelect.classList.add('d-none');
+        prodSelect.disabled = true; // Tắt select kia
+      } else if (selected === 'product') {
+        group.classList.remove('d-none');
+        catSelect.classList.add('d-none');
+        catSelect.disabled = true;
+        prodSelect.classList.remove('d-none');
+        prodSelect.disabled = false; // Bật select này
+      }
+    }
+
+    // Gán sự kiện
+    dieuKienSelect.addEventListener('change', toggleDieuKienFields);
+    // Chạy 1 lần khi tải trang
+    toggleDieuKienFields();
+  });
+</script>

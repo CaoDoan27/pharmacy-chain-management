@@ -14,10 +14,15 @@ const Supplier = sequelize.define('Supplier', {
   email: {
     type: DataTypes.STRING
   },
-  // Thêm trường mới để Vô hiệu hóa
   trangThai: {
     type: DataTypes.STRING,
     defaultValue: 'Đang hoạt động'
+  },
+  // --- THÊM TRƯỜNG MỚI ---
+  congNo: {
+    type: DataTypes.BIGINT, // Dùng BIGINT cho an toàn
+    defaultValue: 0,
+    allowNull: false
   }
 });
 

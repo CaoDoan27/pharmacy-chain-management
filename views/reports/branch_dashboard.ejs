@@ -1,0 +1,233 @@
+<%- include('../partials/header') %>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">Doanh thu Hôm nay</h6>
+        <h2 class="card-title text-primary">
+          <%= new Intl.NumberFormat('vi-VN').format(salesToday.totalRevenue || 0) %> VNĐ
+        </h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">Hóa đơn Hôm nay</h6>
+        <h2 class="card-title"><%= salesToday.totalInvoices || 0 %></h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">Tổng Giá trị Kho</h6>
+        <h2 class="card-title text-success">
+          <%= new Intl.NumberFormat('vi-VN').format(totalInventoryValue || 0) %> VNĐ
+        </h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">SKUs Sắp hết hạn (90 ngày)</h6>
+        <h2 class="card-title text-danger"><%= expiringSKUs || 0 %></h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-8">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title">Doanh thu 7 ngày qua</h5>
+        <canvas id="revenueChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title">Top 5 Sản phẩm bán chạy (30 ngày)</h5>
+        <canvas id="topProductsChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h5 class="mb-0 text-danger">Hàng sắp hết hạn (10 lô gần nhất)</h5>
+      </div>
+      <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+        <table class="table table-sm table-hover">
+          <thead>
+            <tr>
+              <th>Sản phẩm</th>
+              <th>Hạn sử dụng</th>
+              <th>Tồn</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (expiringItems.length === 0) { %>
+              <tr><td colspan="3" class="text-center">Không có hàng nào sắp hết hạn.</td></tr>
+            <% } %>
+            <% expiringItems.forEach(item => { %>
+              <tr>
+                <td><%= item.Product.tenSanPham %></td>
+                <td>
+                  <span class="text-danger fw-bold">
+                    <%= new Date(item.hanSuDung).toLocaleDateString('vi-VN') %>
+                  </span>
+                </td>
+                <td><%= item.soLuongTon %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h5 class="mb-0 text-warning">Hàng sắp hết tồn kho (Top 10)</h5>
+      </div>
+      <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+        <table class="table table-sm table-hover">
+          <thead>
+            <tr>
+              <th>Sản phẩm</th>
+              <th>Đơn vị</th>
+              <th>Tổng tồn</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (lowStockItems.length === 0) { %>
+              <tr><td colspan="3" class="text-center">Chưa có dữ liệu tồn kho.</td></tr>
+            <% } %>
+            <% lowStockItems.forEach(item => { %>
+              <tr>
+                <td><%= item.productName %></td>
+                <td><%= item.donViCoSo %></td>
+                <td><span class="fw-bold"><%= item.totalStock %></span></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<%- include('../partials/footer') %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const formatter = new Intl.NumberFormat('vi-VN');
+
+    // --- 1. Xử lý Dữ liệu Biểu đồ Doanh thu (Bar Chart) ---
+    const revenueData = <%- JSON.stringify(salesLast7Days) %>;
+    
+    // Tạo 7 ngày gần nhất (nhãn)
+    const revenueLabels = [];
+    const revenueValues = [];
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateString = d.toISOString().split('T')[0]; // Format 'YYYY-MM-DD'
+      revenueLabels.push(d.toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric' }));
+
+      // Tìm doanh thu cho ngày này
+      const sale = revenueData.find(s => s.saleDate === dateString);
+      revenueValues.push(sale ? sale.dailyRevenue : 0);
+    }
+    
+    // Vẽ Biểu đồ Doanh thu
+    const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctxRevenue, {
+      type: 'bar',
+      data: {
+        labels: revenueLabels,
+        datasets: [{
+          label: 'Doanh thu (VNĐ)',
+          data: revenueValues,
+          backgroundColor: 'rgba(0, 123, 255, 0.6)',
+          borderColor: 'rgba(0, 123, 255, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) { return formatter.format(value) + ' VNĐ'; }
+            }
+          }
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return 'Doanh thu: ' + formatter.format(context.raw) + ' VNĐ';
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // --- 2. Xử lý Dữ liệu Biểu đồ Top 5 (Doughnut Chart) ---
+    const topProductsData = <%- JSON.stringify(top5Products) %>;
+    
+    const productLabels = topProductsData.map(p => p['Product.tenSanPham']);
+    const productValues = topProductsData.map(p => p.totalSold);
+
+    // Vẽ Biểu đồ Top 5
+    const ctxTopProducts = document.getElementById('topProductsChart').getContext('2d');
+    new Chart(ctxTopProducts, {
+      type: 'doughnut',
+      data: {
+        labels: productLabels,
+        datasets: [{
+          label: 'Số lượng bán',
+          data: productValues,
+          backgroundColor: [
+            'rgba(0, 123, 255, 0.7)',
+            'rgba(23, 162, 184, 0.7)',
+            'rgba(40, 167, 69, 0.7)',
+            'rgba(255, 193, 7, 0.7)',
+            'rgba(220, 53, 69, 0.7)'
+          ],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `${context.label}: ${context.raw} (ĐV)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+  });
+</script>

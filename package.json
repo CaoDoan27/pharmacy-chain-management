@@ -19,12 +19,14 @@
   },
   "homepage": "https://github.com/CaoDoan27/pharmacy-chain-management#readme",
   "dependencies": {
+    "axios": "^1.13.1",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
     "mysql2": "^3.15.3",
+    "nodemailer": "^7.0.10",
     "sequelize": "^6.37.7"
   },
   "devDependencies": {

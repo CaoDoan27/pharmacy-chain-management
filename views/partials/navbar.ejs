@@ -1,41 +1,63 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
   <div class="container-fluid">
-    <a class="navbar-brand" href="/">
+    <a class="navbar-brand fw-bold" href="/">
       Hệ thống Quản lý Nhà thuốc
     </a>
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
       <span class="navbar-toggler-icon"></span>
     </button>
+
     <div class="collapse navbar-collapse" id="navbarNav">
 
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <% if (user) { %>
 
           <% if (user.vaiTro === 'Quản lý chi nhánh' || user.vaiTro === 'Nhân viên') { %>
-            <li class="nav-item">
-              <a class="nav-link" href="/inventory/lookup">Tra cứu Tồn kho</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/customers">Quản lý Khách hàng</a>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle fw-bold" href="#" id="menuNhanVien" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Chức năng Nhân viên
+              </a>
+              <ul class="dropdown-menu dropdown-menu-primary" aria-labelledby="menuNhanVien">
+                <li><a class="dropdown-item" href="/pos">Bán hàng (POS)</a></li>
+                <li><a class="dropdown-item" href="/inventory/lookup">Tra cứu Tồn kho</a></li>
+                <li><a class="dropdown-item" href="/customers">Quản lý Khách hàng</a></li>
+              </ul>
             </li>
           <% } %>
 
           <% if (user.vaiTro === 'Quản lý tổng') { %>
-            <li class="nav-item">
-              <a class="nav-link" href="/products">Quản lý Sản phẩm</a>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="menuQuanLyTong" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Quản lý Tổng
+              </a>
+              <ul class="dropdown-menu dropdown-menu-primary" aria-labelledby="menuQuanLyTong">
+                <li><a class="dropdown-item" href="/products">Quản lý Sản phẩm</a></li>
+                <li><a class="dropdown-item" href="/suppliers">Quản lý Nhà cung cấp</a></li>
+                <li><a class="dropdown-item" href="/promotions">Quản lý Khuyến mãi</a></li>
+                <li><a class="dropdown-item" href="/users">Quản lý Người dùng</a></li>
+              </ul>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="/suppliers">Quản lý Nhà cung cấp</a>
+              <a class="nav-link" href="/reports/general">Báo cáo Tổng hợp</a>
             </li>
           <% } %>
 
           <% if (user.vaiTro === 'Quản lý chi nhánh') { %>
-            <li class="nav-item">
-              <a class="nav-link" href="/goods-receipt/add">Tạo Phiếu Nhập Kho</a>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="menuNhapKho" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Quản lý Kho
+              </a>
+              <ul class="dropdown-menu dropdown-menu-primary" aria-labelledby="menuNhapKho">
+                <li><a class="dropdown-item" href="/purchase-order/add">Tạo Đơn Đặt Hàng</a></li>
+                <li><a class="dropdown-item" href="/goods-receipt/add">Tạo Phiếu Nhập Kho</a></li>
+                <li><a class="dropdown-item" href="/goods-receipt">Lịch sử Nhập kho</a></li>
+                <li><a class="dropdown-item" href="/stock-movement/add">Tạo phiếu Xuất/Hủy</a></li>
+                <li><a class="dropdown-item" href="/stock-movement">Lịch sử Xuất kho</a></li>
+                
+              </ul>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/goods-receipt">Lịch sử Nhập kho</a>
-            </li>
+            <li><a class="nav-link" role="button" href="/reports/branch">Báo cáo Chi nhánh</a></li>
           <% } %>
 
         <% } %>
@@ -61,3 +83,17 @@
     </div>
   </div>
 </nav>
+
+<style>
+  /* Giữ màu chủ đạo xanh đậm khi hover trong dropdown */
+  .dropdown-menu-primary {
+    background-color: #0d6efd;
+  }
+  .dropdown-menu-primary .dropdown-item {
+    color: white;
+  }
+  .dropdown-menu-primary .dropdown-item:hover {
+    background-color: #0b5ed7;
+    color: #fff;
+  }
+</style>

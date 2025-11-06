@@ -1,0 +1,96 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-3"><%= title %></h1>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    
+    <form 
+      action="<%= isEditing ? '/users/edit/' + user.id : '/users/add' %>" 
+      method="POST"
+    >
+      
+      <% if (error) { %>
+        <div class="alert alert-danger" role="alert">
+          <%= error %>
+        </div>
+      <% } %>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="hoTen" class="form-label">Họ tên (*)</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            id="hoTen" 
+            name="hoTen"
+            value="<%= (user && user.hoTen) ? user.hoTen : '' %>"
+            required
+          >
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="tenDangNhap" class="form-label">Tên đăng nhập (*)</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            id="tenDangNhap" 
+            name="tenDangNhap"
+            value="<%= (user && user.tenDangNhap) ? user.tenDangNhap : '' %>"
+            <%= (isEditing) ? 'disabled' : 'required' %>
+          >
+          <% if (isEditing) { %>
+            <small class="text-muted">Không thể thay đổi Tên đăng nhập.</small>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="vaiTro" class="form-label">Vai trò (*)</label>
+          <select class="form-select" id="vaiTro" name="vaiTro" required>
+            <option value="Nhân viên" <%= (user && user.vaiTro === 'Nhân viên') ? 'selected' : '' %>>Nhân viên</option>
+            <option value="Quản lý chi nhánh" <%= (user && user.vaiTro === 'Quản lý chi nhánh') ? 'selected' : '' %>>Quản lý chi nhánh</option>
+          </select>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="branchId" class="form-label">Chi nhánh làm việc (*)</label>
+          <select class="form-select" id="branchId" name="branchId" required>
+            <option value="" selected disabled>-- Chọn chi nhánh --</option>
+            <% branches.forEach(branch => { %>
+              <option 
+                value="<%= branch.id %>" 
+                <%= (user && user.branchId == branch.id) ? 'selected' : '' %>
+              >
+                <%= branch.tenChiNhanh %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+
+      <% if (!isEditing) { %>
+        <div class="mb-3">
+          <label for="matKhau" class="form-label">Mật khẩu ban đầu (*)</label>
+          <input 
+            type="password" 
+            class="form-control" 
+            id="matKhau" 
+            name="matKhau"
+            placeholder="Ví dụ: 123456"
+            required
+          >
+        </div>
+      <% } %>
+      
+      <hr>
+      
+      <button type="submit" class="btn btn-primary">
+        <%= isEditing ? 'Cập nhật Người dùng' : 'Lưu Người dùng' %>
+      </button>
+      <a href="/users" class="btn btn-secondary">Hủy</a>
+
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

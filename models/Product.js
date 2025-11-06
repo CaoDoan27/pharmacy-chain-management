@@ -21,6 +21,10 @@ const Product = sequelize.define('Product', {
     type: DataTypes.STRING, // Ví dụ: 'Viên', 'Gói', 'Chai', 'Ống'
     allowNull: false
   },
+  quyCach: {
+    type: DataTypes.STRING, // Ví dụ: "Hộp 10 vỉ x 10 viên"
+    allowNull: true // Cho phép null
+  },
   giaBan: {
     type: DataTypes.DOUBLE, // Giá bán cho 1 đơn vị cơ sở (ví dụ: giá 1 viên)
     allowNull: false,

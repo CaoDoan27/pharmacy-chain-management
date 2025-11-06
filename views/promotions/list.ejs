@@ -1,0 +1,73 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3"><%= title %></h1>
+  <a href="/promotions/add" class="btn btn-primary">
+    + Tạo Khuyến mãi mới
+  </a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">Tên Chương trình</th>
+          <th scope="col">Thời gian hiệu lực</th>
+          <th scope="col">Quy tắc</th>
+          <th scope="col">Trạng thái</th>
+          <th scope="col" class="text-end">Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (promotions.length === 0) { %>
+          <tr>
+            <td colspan="5" class="text-center">Chưa có chương trình khuyến mãi nào.</td>
+          </tr>
+        <% } %>
+
+        <% promotions.forEach(promo => { %>
+          <tr>
+            <td><strong><%= promo.tenChuongTrinh %></strong></td>
+            <td>
+              <%= new Date(promo.ngayBatDau).toLocaleDateString('vi-VN') %> - 
+              <%= new Date(promo.ngayKetThuc).toLocaleDateString('vi-VN') %>
+            </td>
+            <td>
+              <strong><%= promo.loaiGiamGia === 'percentage' ? `${promo.giaTriGiam}%` : `${new Intl.NumberFormat('vi-VN').format(promo.giaTriGiam)} VNĐ` %></strong>
+              <small class="d-block text-muted">
+                Áp dụng cho: 
+                <% if (promo.dieuKienApDung === 'all') { %>
+                  Toàn bộ hóa đơn
+                <% } else if (promo.dieuKienApDung === 'category') { %>
+                  Danh mục "<%= promo.giaTriDieuKien %>"
+                <% } else { %>
+                  Sản phẩm ID #<%= promo.giaTriDieuKien %>
+                <% } %>
+              </small>
+            </td>
+            <td>
+              <% if (promo.trangThai === 'Đang hoạt động') { %>
+                <span class="badge bg-success">Đang hoạt động</span>
+              <% } else { %>
+                <span class="badge bg-secondary">Vô hiệu hóa</span>
+              <% } %>
+            </td>
+            <td class="text-end">
+              <form action="/promotions/status/<%= promo.id %>" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-warning btn-sm">
+                  <%= (promo.trangThai === 'Đang hoạt động') ? 'Vô hiệu hóa' : 'Kích hoạt' %>
+                </button>
+              </form>
+              <a href="/promotions/edit/<%= promo.id %>" class="btn btn-outline-primary btn-sm">
+                Sửa
+              </a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

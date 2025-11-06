@@ -1,0 +1,188 @@
+<%- include('../partials/header') %>
+
+<h1 class="h3 mb-3"><%= title %></h1>
+
+<form action="/stock-movement/add" method="POST" id="movement-form">
+  <div class="card shadow-sm">
+    <div class="card-header">
+      <h5 class="mb-0">Tạo Phiếu Xuất</h5>
+    </div>
+    <div class="card-body">
+      <% if (error) { %>
+        <div class="alert alert-danger" role="alert">
+          <strong>Lỗi:</strong> <%= error %>
+        </div>
+      <% } %>
+
+      <div class="row">
+        <div class="col-md-4">
+          <label for="loaiPhieu" class="form-label">Loại nghiệp vụ (*)</label>
+          <select class="form-select" id="loaiPhieu" name="loaiPhieu" required>
+            <option value="Xuất Hủy">1. Xuất Hủy (Hỏng, Hết hạn)</option>
+            <option value="Chuyển kho">2. Chuyển kho (Lưu chuyển nội bộ)</option>
+          </select>
+        </div>
+        <div class="col-md-8">
+          <label for="productId" class="form-label">Chọn Sản phẩm (*)</label>
+          <select class="form-select" id="productId" name="productId" required>
+            <option value="" selected disabled>-- Chọn 1 sản phẩm có tồn kho --</option>
+            <% products.forEach(product => { %>
+              <option value="<%= product.id %>">
+                <%= product.tenSanPham %> (<%= product.donViCoSo %>)
+              </option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+
+      <hr>
+      <h5 class="mb-3">Chi tiết Lô hàng</h5>
+
+      <div class="row">
+        <div class="col-md-6">
+          <label for="batchId" class="form-label">Chọn Lô hàng cụ thể (*)</label>
+          <select class="form-select" id="batchId" name="batchId" required disabled>
+            <option value="" selected disabled>-- (Vui lòng chọn sản phẩm trước) --</option>
+            </select>
+          <small id="batch-info" class="text-muted"></small>
+        </div>
+        <div class="col-md-6">
+          <label for="soLuong" class="form-label">Số lượng xuất (*)</label>
+          <input type="number" class="form-control" id="soLuong" name="soLuong" min="1" required disabled>
+          <input type="hidden" id="soLuongGoiY" value="0">
+        </div>
+      </div>
+
+      <div id="dynamic-fields" class="mt-3">
+        <div id="group-lyDo" class="d-none">
+          <label for="lyDo" class="form-label">Lý do Hủy (*)</label>
+          <textarea class="form-control" id="lyDo" name="lyDo" rows="3" placeholder="Nhập lý do chi tiết (ví dụ: Hỏng 2 vỉ do vận chuyển, Hết hạn sử dụng...)"></textarea>
+        </div>
+
+        <div id="group-chuyenKho" class="d-none">
+          <label for="chiNhanhNhanId" class="form-label">Chuyển đến Chi nhánh (*)</label>
+          <select class="form-select" id="chiNhanhNhanId" name="chiNhanhNhanId">
+            <option value="" selected disabled>-- Chọn chi nhánh nhận --</option>
+            <% branches.forEach(branch => { %>
+              <option value="<%= branch.id %>"><%= branch.tenChiNhanh %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  
+  <div class="mt-4 text-end">
+    <a href="/stock-movement" class="btn btn-secondary">Hủy</a>
+    <button type="submit" class="btn btn-primary btn-lg" id="submit-btn" disabled>Xác nhận Xuất</button>
+  </div>
+</form>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<%- include('../partials/footer') %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const loaiPhieuSelect = document.getElementById('loaiPhieu');
+    const productIdSelect = document.getElementById('productId');
+    const batchIdSelect = document.getElementById('batchId');
+    const soLuongInput = document.getElementById('soLuong');
+    const soLuongGoiY = document.getElementById('soLuongGoiY');
+    const batchInfo = document.getElementById('batch-info');
+    const submitBtn = document.getElementById('submit-btn');
+
+    const groupLyDo = document.getElementById('group-lyDo');
+    const lyDoInput = document.getElementById('lyDo');
+    const groupChuyenKho = document.getElementById('group-chuyenKho');
+    const chiNhanhNhanIdSelect = document.getElementById('chiNhanhNhanId');
+
+    // 1. Xử lý logic Ẩn/Hiện
+    function toggleDynamicFields() {
+      const selectedType = loaiPhieuSelect.value;
+      if (selectedType === 'Xuất Hủy') {
+        groupLyDo.classList.remove('d-none');
+        lyDoInput.required = true; // Bắt buộc nhập lý do
+        
+        groupChuyenKho.classList.add('d-none');
+        chiNhanhNhanIdSelect.required = false;
+      } else if (selectedType === 'Chuyển kho') {
+        groupLyDo.classList.add('d-none');
+        lyDoInput.required = false;
+
+        groupChuyenKho.classList.remove('d-none');
+        chiNhanhNhanIdSelect.required = true; // Bắt buộc chọn chi nhánh nhận
+      }
+      checkFormValidity();
+    }
+
+    loaiPhieuSelect.addEventListener('change', toggleDynamicFields);
+    toggleDynamicFields(); // Chạy 1 lần khi tải trang
+
+    // 2. Xử lý logic tải Lô hàng
+    productIdSelect.addEventListener('change', async function() {
+      const productId = this.value;
+      if (!productId) return;
+
+      // Reset
+      batchIdSelect.disabled = true;
+      batchIdSelect.innerHTML = '<option value="">Đang tải lô hàng...</option>';
+      batchInfo.textContent = '';
+      soLuongInput.disabled = true;
+      soLuongInput.value = '';
+
+      try {
+        const res = await axios.get(`/stock-movement/api/batches/${productId}`);
+        const batches = res.data;
+        
+        batchIdSelect.innerHTML = '<option value="" selected disabled>-- Chọn lô hàng cụ thể --</option>';
+        batches.forEach(batch => {
+          const hsd = new Date(batch.hanSuDung).toLocaleDateString('vi-VN');
+          const option = new Option(
+            `Lô: ${batch.soLo} (HSD: ${hsd})`, // Text
+            batch.id // Value
+          );
+          // Lưu trữ thông tin tồn kho vào data attribute
+          option.dataset.tonKho = batch.soLuongTon;
+          batchIdSelect.add(option);
+        });
+        batchIdSelect.disabled = false;
+      } catch (err) {
+        console.error('Lỗi khi tải lô hàng:', err);
+        batchIdSelect.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
+      }
+    });
+
+    // 3. Xử lý logic Gợi ý Số lượng (Yêu cầu của bạn)
+    batchIdSelect.addEventListener('change', function() {
+      if (!this.value) {
+        soLuongInput.disabled = true;
+        soLuongInput.value = '';
+        soLuongGoiY.value = 0;
+        batchInfo.textContent = '';
+        return;
+      }
+
+      const selectedOption = this.options[this.selectedIndex];
+      const tonKho = selectedOption.dataset.tonKho;
+
+      soLuongGoiY.value = tonKho; // Lưu số lượng tối đa
+      soLuongInput.value = tonKho; // (Gợi ý) Tự động điền số lượng
+      soLuongInput.disabled = false;
+      soLuongInput.max = tonKho; // Đặt max (để trình duyệt tự validate)
+
+      batchInfo.textContent = `Tồn kho của lô này: ${tonKho}`;
+      checkFormValidity();
+    });
+
+    // 4. Kiểm tra Submit
+    function checkFormValidity() {
+      // Bật nút Submit nếu tất cả các trường required (bao gồm cả trường động) có giá trị
+      const isFormValid = document.getElementById('movement-form').checkValidity();
+      submitBtn.disabled = !isFormValid;
+    }
+    document.getElementById('movement-form').addEventListener('input', checkFormValidity);
+    document.getElementById('movement-form').addEventListener('change', checkFormValidity);
+
+  });
+</script>
